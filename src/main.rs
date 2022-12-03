@@ -6,6 +6,7 @@ use std::{
 
 mod day01;
 mod day02;
+mod day03;
 
 fn main() -> Result<()> {
     let stdin = stdin();
@@ -36,6 +37,7 @@ fn main() -> Result<()> {
     match day {
         1 => day01::run(lines),
         2 => day02::run(lines),
+        3 => day03::run(lines),
         _ => {}
     }
 
