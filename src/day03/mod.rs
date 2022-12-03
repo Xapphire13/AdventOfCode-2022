@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 pub fn run(input: Vec<String>) {
     println!("Part 1: {}", part1(&input));
@@ -31,7 +31,7 @@ fn part1(input: &Vec<String>) -> u32 {
         let compartment1 = &line[..mid];
         let compartment2 = &line[mid..];
         let compartment1_set = build_compartment_set(compartment1);
-        let mut shared_item: Option<char> = None;
+        let mut shared_item = None;
 
         for c in compartment2.chars() {
             if compartment1_set.contains(&c) {
@@ -50,5 +50,37 @@ fn part1(input: &Vec<String>) -> u32 {
 }
 
 fn part2(input: &Vec<String>) -> u32 {
-    return 0;
+    let mut result = 0;
+
+    let mut i = 0;
+    while i <= input.len() - 3 {
+        let bag1 = &input[i];
+        let bag2 = &input[i + 1];
+        let bag3 = &input[i + 2];
+        let bag1_set = build_compartment_set(bag1);
+        let mut bag2_set = HashSet::new();
+
+        for c in bag2.chars() {
+            if bag1_set.contains(&c) {
+                bag2_set.insert(c);
+            }
+        }
+
+        let mut shared_item = None;
+        for c in bag3.chars() {
+            if bag2_set.contains(&c) {
+                shared_item = Some(c);
+                break;
+            }
+        }
+
+        if let Some(shared_item) = shared_item {
+            let priority = get_priority(shared_item);
+            result += priority;
+        }
+
+        i += 3;
+    }
+
+    return result;
 }
