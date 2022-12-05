@@ -8,18 +8,18 @@ pub fn run(input: Vec<String>) {
 
 struct Range(u32, u32);
 
-fn parse_input(line: &String) -> [Range; 2] {
+fn parse_input(line: &str) -> [Range; 2] {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(\d+)-(\d+),(\d+)-(\d+)").unwrap();
     }
 
     let caps = RE.captures(line).unwrap();
-    let r1_start = u32::from_str_radix(caps.get(1).unwrap().as_str(), 10).unwrap();
-    let r1_end = u32::from_str_radix(caps.get(2).unwrap().as_str(), 10).unwrap();
-    let r2_start = u32::from_str_radix(caps.get(3).unwrap().as_str(), 10).unwrap();
-    let r2_end = u32::from_str_radix(caps.get(4).unwrap().as_str(), 10).unwrap();
+    let r1_start = caps.get(1).unwrap().as_str().parse::<u32>().unwrap();
+    let r1_end = caps.get(2).unwrap().as_str().parse::<u32>().unwrap();
+    let r2_start = caps.get(3).unwrap().as_str().parse::<u32>().unwrap();
+    let r2_end = caps.get(4).unwrap().as_str().parse::<u32>().unwrap();
 
-    return [Range(r1_start, r1_end), Range(r2_start, r2_end)];
+    [Range(r1_start, r1_end), Range(r2_start, r2_end)]
 }
 
 fn is_subset(range1: Range, range2: Range) -> bool {
@@ -36,7 +36,7 @@ fn is_subset(range1: Range, range2: Range) -> bool {
         smaller_range = range1;
     }
 
-    return smaller_range.0 >= bigger_range.0 && smaller_range.1 <= bigger_range.1;
+    smaller_range.0 >= bigger_range.0 && smaller_range.1 <= bigger_range.1
 }
 
 fn has_overlap(range1: Range, range2: Range) -> bool {
@@ -51,7 +51,7 @@ fn has_overlap(range1: Range, range2: Range) -> bool {
         right_range = range1;
     }
 
-    return right_range.0 <= left_range.1;
+    right_range.0 <= left_range.1
 }
 
 fn part1(input: &Vec<String>) -> u32 {
@@ -65,7 +65,7 @@ fn part1(input: &Vec<String>) -> u32 {
         }
     }
 
-    return result;
+    result
 }
 
 fn part2(input: &Vec<String>) -> u32 {
@@ -79,5 +79,5 @@ fn part2(input: &Vec<String>) -> u32 {
         }
     }
 
-    return result;
+    result
 }

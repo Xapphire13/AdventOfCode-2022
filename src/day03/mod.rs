@@ -12,7 +12,7 @@ fn build_compartment_set(compartment: &str) -> HashSet<char> {
         set.insert(c);
     }
 
-    return set;
+    set
 }
 
 fn get_priority(item: char) -> u32 {
@@ -46,7 +46,7 @@ fn part1(input: &Vec<String>) -> u32 {
         }
     }
 
-    return result;
+    result
 }
 
 fn part2(input: &Vec<String>) -> u32 {
@@ -82,5 +82,5 @@ fn part2(input: &Vec<String>) -> u32 {
         i += 3;
     }
 
-    return result;
+    result
 }

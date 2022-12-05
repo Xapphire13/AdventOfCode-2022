@@ -14,16 +14,16 @@ struct Instruction {
     to: u32,
 }
 
-fn parse_stack_line(line: &String) -> Vec<Option<char>> {
+fn parse_stack_line(line: &str) -> Vec<Option<char>> {
     let mut result = Vec::new();
 
     let mut i = 0;
     while i < line.chars().count() {
-        let slice = &line[i + 1..i + 2].chars().nth(0);
+        let slice = &line[i + 1..i + 2].chars().next();
 
         if let Some(val) = slice {
             result.push(if val.is_alphabetic() {
-                Some(val.clone())
+                Some(*val)
             } else {
                 None
             });
@@ -34,19 +34,19 @@ fn parse_stack_line(line: &String) -> Vec<Option<char>> {
         i += 4;
     }
 
-    return result;
+    result
 }
 
-fn parse_input(input: &Vec<String>) -> (Vec<LinkedList<char>>, Vec<Instruction>) {
+fn parse_input(input: &[String]) -> (Vec<LinkedList<char>>, Vec<Instruction>) {
     let mut iterator = input.iter();
     let mut stacks: Vec<LinkedList<char>> = vec![];
 
-    while let Some(line) = iterator.next() {
+    for line in iterator.by_ref() {
         let trimmed_line = line.trim();
         if trimmed_line.is_empty() {
             break; // Input separator
         }
-        if !trimmed_line.starts_with("[") {
+        if !trimmed_line.starts_with('[') {
             continue; // Stack numbers
         }
 
@@ -62,7 +62,7 @@ fn parse_input(input: &Vec<String>) -> (Vec<LinkedList<char>>, Vec<Instruction>)
 
         for (i, val) in stack_line.iter().enumerate() {
             if let Some(val) = val {
-                stacks.get_mut(i).unwrap().push_back(val.clone());
+                stacks.get_mut(i).unwrap().push_back(*val);
             }
         }
     }
@@ -70,19 +70,19 @@ fn parse_input(input: &Vec<String>) -> (Vec<LinkedList<char>>, Vec<Instruction>)
     let re = Regex::new(r"move (\d+) from (\d+) to (\d+)").unwrap();
     let mut instructions = vec![];
 
-    while let Some(line) = iterator.next() {
+    for line in iterator.by_ref() {
         let caps = re.captures(line).unwrap();
-        let count = u32::from_str_radix(caps.get(1).unwrap().as_str(), 10).unwrap();
-        let from = u32::from_str_radix(caps.get(2).unwrap().as_str(), 10).unwrap() - 1;
-        let to = u32::from_str_radix(caps.get(3).unwrap().as_str(), 10).unwrap() - 1;
+        let count = caps.get(1).unwrap().as_str().parse::<u32>().unwrap();
+        let from = caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1;
+        let to = caps.get(3).unwrap().as_str().parse::<u32>().unwrap() - 1;
 
         instructions.push(Instruction { count, to, from })
     }
 
-    return (stacks, instructions);
+    (stacks, instructions)
 }
 
-fn part1(input: &Vec<String>) -> String {
+fn part1(input: &[String]) -> String {
     let mut result = String::new();
     let (mut stacks, instructions) = parse_input(input);
 
@@ -108,14 +108,14 @@ fn part1(input: &Vec<String>) -> String {
         let top = stack.front();
 
         if let Some(top) = top {
-            result.push(top.clone());
+            result.push(*top);
         }
     }
 
-    return result;
+    result
 }
 
-fn part2(input: &Vec<String>) -> String {
+fn part2(input: &[String]) -> String {
     let mut result = String::new();
     let (mut stacks, instructions) = parse_input(input);
 
@@ -141,9 +141,9 @@ fn part2(input: &Vec<String>) -> String {
         let top = stack.front();
 
         if let Some(top) = top {
-            result.push(top.clone());
+            result.push(*top);
         }
     }
 
-    return result;
+    result
 }

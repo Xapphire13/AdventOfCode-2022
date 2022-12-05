@@ -21,7 +21,7 @@ fn main() -> Result<()> {
         stdout().flush()?;
         stdin.read_line(&mut input)?;
 
-        match u32::from_str_radix(input.trim(), 10) {
+        match input.trim().parse::<u32>() {
             Ok(value) => {
                 day = value;
                 break;

@@ -3,7 +3,7 @@ pub fn run(input: Vec<String>) {
     println!("Part 2: {}", part2(&input));
 }
 
-fn part1(input: &Vec<String>) -> i32 {
+fn part1(input: &[String]) -> i32 {
     let mut max = 0;
     let mut sum = 0;
 
@@ -14,7 +14,7 @@ fn part1(input: &Vec<String>) -> i32 {
             }
             sum = 0;
         } else {
-            sum += i32::from_str_radix(line, 10).unwrap();
+            sum += line.parse::<i32>().unwrap();
         }
     }
 
@@ -22,16 +22,16 @@ fn part1(input: &Vec<String>) -> i32 {
         max = sum;
     }
 
-    return max;
+    max
 }
 
-fn part2(input: &Vec<String>) -> i32 {
+fn part2(input: &[String]) -> i32 {
     let mut top3 = [0; 3];
 
     let mut insert = |val: i32| {
         // Find insertion point, shift values, insert
         if val < top3[0] {
-            return;
+            // NO-OP
         } else if val < top3[1] {
             top3[0] = val;
         } else if val < top3[2] {
@@ -51,7 +51,7 @@ fn part2(input: &Vec<String>) -> i32 {
             insert(sum);
             sum = 0;
         } else {
-            sum += i32::from_str_radix(line, 10).unwrap();
+            sum += line.parse::<i32>().unwrap();
         }
     }
 

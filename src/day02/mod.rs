@@ -77,51 +77,50 @@ fn play(opponent_shape: Shape, my_shape: Shape) -> u32 {
         3 // Tie
     };
 
-    return result + my_shape_val;
+    result + my_shape_val
 }
 
-fn parse_input_line_v1(line: &String) -> (Shape, Shape) {
-    let split: [&str; 2] = line.split(" ").collect::<Vec<&str>>().try_into().unwrap();
+fn parse_input_line_v1(line: &str) -> (Shape, Shape) {
+    let split: [&str; 2] = line.split(' ').collect::<Vec<&str>>().try_into().unwrap();
 
-    return (get_opponent_shape(split[0]), get_my_shape(split[1]));
+    (get_opponent_shape(split[0]), get_my_shape(split[1]))
 }
 
-fn parse_input_line_v2(line: &String) -> (Shape, Outcome) {
-    let split: [&str; 2] = line.split(" ").collect::<Vec<&str>>().try_into().unwrap();
+fn parse_input_line_v2(line: &str) -> (Shape, Outcome) {
+    let split: [&str; 2] = line.split(' ').collect::<Vec<&str>>().try_into().unwrap();
 
-    return (get_opponent_shape(split[0]), get_desired_outcome(split[1]));
+    (get_opponent_shape(split[0]), get_desired_outcome(split[1]))
 }
 
 fn part1(input: &Vec<String>) -> u32 {
     let mut score = 0;
 
     for line in input {
-        match parse_input_line_v1(line) {
-            (opponent_play, my_play) => score += play(opponent_play, my_play),
-        }
+        let (opponent_play, my_play) = parse_input_line_v1(line);
+        score += play(opponent_play, my_play);
     }
 
-    return score;
+    score
 }
 
 fn part2(input: &Vec<String>) -> u32 {
     let mut score = 0;
 
     for line in input {
-        match parse_input_line_v2(line) {
-            (opponent_play, desired_outcome) => match desired_outcome {
-                Outcome::Lose => {
-                    let my_play = get_losing_play(opponent_play);
-                    score += play(opponent_play, my_play);
-                }
-                Outcome::Win => {
-                    let my_play = get_winning_play(opponent_play);
-                    score += play(opponent_play, my_play);
-                }
-                Outcome::Tie => score += play(opponent_play, opponent_play),
-            },
-        }
+        let (opponent_play, desired_outcome) = parse_input_line_v2(line);
+
+        match desired_outcome {
+            Outcome::Lose => {
+                let my_play = get_losing_play(opponent_play);
+                score += play(opponent_play, my_play);
+            }
+            Outcome::Win => {
+                let my_play = get_winning_play(opponent_play);
+                score += play(opponent_play, my_play);
+            }
+            Outcome::Tie => score += play(opponent_play, opponent_play),
+        };
     }
 
-    return score;
+    score
 }
