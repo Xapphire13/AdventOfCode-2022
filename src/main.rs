@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, stdin, stdout, BufRead, BufReader, Result, Write},
+    io::{self, stdin, stdout, BufRead, BufReader, Read, Result, Write},
     path::Path,
 };
 
@@ -9,6 +9,7 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 
 fn main() -> Result<()> {
     let stdin = stdin();
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
         3 => day03::run(lines),
         4 => day04::run(lines),
         5 => day05::run(lines),
+        6 => day06::run(lines),
         _ => {}
     }
 
