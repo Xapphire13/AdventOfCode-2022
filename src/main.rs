@@ -10,7 +10,7 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
-
+mod day07;
 fn main() -> Result<()> {
     let stdin = stdin();
     let mut input: String;
@@ -44,6 +44,7 @@ fn main() -> Result<()> {
         4 => day04::run(lines),
         5 => day05::run(lines),
         6 => day06::run(lines),
+        7 => day07::run(lines),
         _ => {}
     }
 
