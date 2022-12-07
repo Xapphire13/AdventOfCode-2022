@@ -80,7 +80,7 @@ fn parse_file(file: &str, parent: Rc<RefCell<File>>) -> File {
     }
 }
 
-fn part1(input: &[String]) -> usize {
+fn build_tree(input: &[String]) -> Rc<RefCell<File>> {
     let root = File {
         name: String::from("/"),
         size: 0,
@@ -91,7 +91,6 @@ fn part1(input: &[String]) -> usize {
     let root = Rc::new(RefCell::new(root));
     let mut cwd = root.clone();
     let mut iter = input.iter();
-    let iter = iter.by_ref();
 
     while let Some(line) = iter.next() {
         if line.starts_with('$') {
@@ -116,20 +115,22 @@ fn part1(input: &[String]) -> usize {
                     }
                 },
                 Command::List => {
-                    let mut skip = 0;
-                    for line in iter.clone().take_while(|it| !it.starts_with('$')) {
+                    let ls_iter = iter.clone().take_while(|it| !it.starts_with('$'));
+                    for line in ls_iter {
                         let file = parse_file(line, cwd.clone());
                         cwd.borrow_mut().children.push(Rc::new(RefCell::new(file)));
-                        skip += 1;
-                    }
-
-                    for _ in 0..skip {
-                        iter.next();
+                        iter.next(); // Advance overall iterator
                     }
                 }
             }
         }
     }
+
+    root
+}
+
+fn part1(input: &[String]) -> usize {
+    let root = build_tree(input);
 
     let mut result = 0;
     let mut small_files = vec![];
@@ -145,55 +146,7 @@ fn part1(input: &[String]) -> usize {
 }
 
 fn part2(input: &[String]) -> usize {
-    let root = File {
-        name: String::from("/"),
-        size: 0,
-        children: vec![],
-        is_directory: true,
-        parent: None,
-    };
-    let root = Rc::new(RefCell::new(root));
-    let mut cwd = root.clone();
-    let mut iter = input.iter();
-    let iter = iter.by_ref();
-
-    while let Some(line) = iter.next() {
-        if line.starts_with('$') {
-            match parse_command(line) {
-                Command::ChangeDir(arg) => match arg.as_str() {
-                    "/" => {
-                        cwd = root.clone();
-                    }
-                    ".." => {
-                        let parent = cwd.borrow().parent.as_ref().cloned().unwrap();
-                        cwd = parent;
-                    }
-                    _ => {
-                        let child = cwd
-                            .borrow()
-                            .children
-                            .iter()
-                            .find(|it| it.borrow().name == arg)
-                            .unwrap()
-                            .clone();
-                        cwd = child;
-                    }
-                },
-                Command::List => {
-                    let mut skip = 0;
-                    for line in iter.clone().take_while(|it| !it.starts_with('$')) {
-                        let file = parse_file(line, cwd.clone());
-                        cwd.borrow_mut().children.push(Rc::new(RefCell::new(file)));
-                        skip += 1;
-                    }
-
-                    for _ in 0..skip {
-                        iter.next();
-                    }
-                }
-            }
-        }
-    }
+    let root = build_tree(input);
 
     let mut small_files = vec![];
     let used_space = count_files(&mut small_files, &root.borrow());
