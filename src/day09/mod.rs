@@ -1,3 +1,4 @@
+use core::num;
 use std::collections::HashSet;
 
 pub fn run(input: Vec<String>) {
@@ -15,60 +16,65 @@ enum Direction {
 type Position = (i32, i32);
 
 struct Rope {
-    head: Position,
-    tail: Position,
+    knots: Vec<Position>,
     tail_positions: HashSet<Position>,
 }
 
 impl Rope {
-    fn new() -> Rope {
+    fn new(num_knots: usize) -> Rope {
         Rope {
-            head: (0, 0),
-            tail: (0, 0),
+            knots: vec![(0, 0); num_knots],
             tail_positions: HashSet::from_iter([(0, 0)]),
         }
     }
 
     fn move_head(&mut self, direction: Direction, distance: usize) {
         for _ in 0..distance {
+            let head = &mut self.knots[0];
+
             match direction {
                 Direction::Up => {
-                    self.head.1 += 1;
+                    head.1 += 1;
                 }
                 Direction::Down => {
-                    self.head.1 -= 1;
+                    head.1 -= 1;
                 }
                 Direction::Left => {
-                    self.head.0 -= 1;
+                    head.0 -= 1;
                 }
                 Direction::Right => {
-                    self.head.0 += 1;
+                    head.0 += 1;
                 }
             }
 
-            let dx = self.head.0 - self.tail.0;
-            let dy = self.head.1 - self.tail.1;
+            for i in 1..self.knots.len() {
+                let head = self.knots[i - 1];
+                let tail = &mut self.knots[i];
 
-            // Drifted horizontally
-            if dx.abs() == 2 {
-                // Diagonal
-                if dy.abs() == 1 {
-                    self.tail.1 += if dy > 0 { 1 } else { -1 };
+                let dx = head.0 - tail.0;
+                let dy = head.1 - tail.1;
+
+                // Drifted horizontally
+                if dx.abs() == 2 {
+                    // Diagonal
+                    if dy.abs() > 0 {
+                        tail.1 += if dy > 0 { 1 } else { -1 };
+                    }
+
+                    tail.0 += if dx > 0 { 1 } else { -1 };
                 }
+                // Drifted vertically
+                else if dy.abs() == 2 {
+                    // Diagonal
+                    if dx.abs() > 0 {
+                        tail.0 += if dx > 0 { 1 } else { -1 };
+                    }
 
-                self.tail.0 += if dx > 0 { 1 } else { -1 };
-            }
-            // Drifted horizontally
-            else if dy.abs() == 2 {
-                // Diagonal
-                if dx.abs() == 1 {
-                    self.tail.0 += if dx > 0 { 1 } else { -1 };
+                    tail.1 += if dy > 0 { 1 } else { -1 };
                 }
-
-                self.tail.1 += if dy > 0 { 1 } else { -1 };
             }
 
-            self.tail_positions.insert(self.tail);
+            self.tail_positions.insert(self.knots[self.knots.len() - 1]);
         }
     }
 }
@@ -94,7 +100,7 @@ fn parse_input(input: &[String]) -> Vec<(Direction, usize)> {
 
 fn part1(input: &[String]) -> usize {
     let steps = parse_input(input);
-    let mut rope = Rope::new();
+    let mut rope = Rope::new(2);
 
     for (direction, distance) in steps {
         rope.move_head(direction, distance);
@@ -104,5 +110,12 @@ fn part1(input: &[String]) -> usize {
 }
 
 fn part2(input: &[String]) -> usize {
-    todo!();
+    let steps = parse_input(input);
+    let mut rope = Rope::new(10);
+
+    for (direction, distance) in steps {
+        rope.move_head(direction, distance);
+    }
+
+    rope.tail_positions.len()
 }
