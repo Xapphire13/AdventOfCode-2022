@@ -108,9 +108,9 @@ impl Crt {
 
         self.buffer[row][col] =
             if (col.saturating_sub(1)..=col + 1).contains(&(sprite_position as usize)) {
-                '#'
+                '█'
             } else {
-                '.'
+                '░'
             };
     }
 
