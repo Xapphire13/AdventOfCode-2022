@@ -3,7 +3,8 @@ use std::collections::VecDeque;
 
 pub fn run(input: Vec<String>) {
     println!("Part 1: {}", part1(&input));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 2:");
+    part2(&input);
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -12,7 +13,7 @@ enum Instruction {
     AddX(i32),
 }
 
-struct Computer {
+struct Cpu {
     cycle: usize,
     register: i32,
     /** The currently executing instruction */
@@ -20,9 +21,9 @@ struct Computer {
     program: VecDeque<Instruction>,
 }
 
-impl Computer {
-    fn new() -> Computer {
-        Computer {
+impl Cpu {
+    fn new() -> Cpu {
+        Cpu {
             cycle: 0,
             register: 1,
             instruction: None,
@@ -87,23 +88,70 @@ fn parse_input(input: &[String]) -> Vec<Instruction> {
         .collect()
 }
 
+struct Crt {
+    /** Buffer for 6x40 (Height x Width) display */
+    buffer: [[char; 40]; 6],
+}
+
+impl Crt {
+    fn new() -> Crt {
+        Crt {
+            buffer: [[' '; 40]; 6],
+        }
+    }
+
+    fn draw(&mut self, cpu: &Cpu) {
+        let sprite_position = cpu.register;
+        let pixel = cpu.cycle;
+        let row = pixel / 40;
+        let col = pixel % 40;
+
+        self.buffer[row][col] =
+            if (col.saturating_sub(1)..=col + 1).contains(&(sprite_position as usize)) {
+                '#'
+            } else {
+                '.'
+            };
+    }
+
+    fn display(&self) {
+        for row in self.buffer {
+            for col in row {
+                print!("{}", col);
+            }
+
+            println!();
+        }
+    }
+}
+
 fn part1(input: &[String]) -> i32 {
     let program = parse_input(input);
-    let mut computer = Computer::new();
-    computer.load(&program);
+    let mut cpu = Cpu::new();
+    cpu.load(&program);
     let mut result = 0;
 
-    while !computer.is_done() {
-        computer.tick();
+    while !cpu.is_done() {
+        cpu.tick();
 
-        if computer.cycle == 20 || (computer.cycle > 20 && ((computer.cycle - 20) % 40 == 0)) {
-            result += computer.signal()
+        if [20, 60, 100, 140, 180, 220].contains(&cpu.cycle) {
+            result += cpu.signal()
         }
     }
 
     result
 }
 
-fn part2(input: &[String]) -> usize {
-    todo!();
+fn part2(input: &[String]) {
+    let program = parse_input(input);
+    let mut cpu = Cpu::new();
+    let mut crt = Crt::new();
+    cpu.load(&program);
+
+    while !cpu.is_done() {
+        crt.draw(&cpu);
+        cpu.tick();
+    }
+
+    crt.display();
 }
