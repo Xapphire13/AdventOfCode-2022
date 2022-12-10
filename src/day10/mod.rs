@@ -106,12 +106,12 @@ impl Crt {
         let row = pixel / 40;
         let col = pixel % 40;
 
-        self.buffer[row][col] =
-            if (col.saturating_sub(1)..=col + 1).contains(&(sprite_position as usize)) {
-                '█'
-            } else {
-                '░'
-            };
+        self.buffer[row][col] = if ((col as i32) - 1..=(col as i32) + 1).contains(&sprite_position)
+        {
+            '█'
+        } else {
+            '░'
+        };
     }
 
     fn display(&self) {
