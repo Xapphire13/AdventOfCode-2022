@@ -6,16 +6,16 @@ pub fn run(input: Vec<String>) {
 }
 
 #[derive(Copy, Clone)]
-struct Item(u32);
+struct Item(u64);
 
 struct Test {
-    divisor: u32,
-    on_pass: u32,
-    on_fail: u32,
+    divisor: u64,
+    on_pass: u64,
+    on_fail: u64,
 }
 
 impl Test {
-    fn execute(&self, worry_score: u32) -> u32 {
+    fn execute(&self, worry_score: u64) -> u64 {
         if worry_score % self.divisor == 0 {
             self.on_pass
         } else {
@@ -26,7 +26,7 @@ impl Test {
 
 enum Operand {
     UseSelf,
-    Value(u32),
+    Value(u64),
 }
 
 enum Operation {
@@ -35,7 +35,7 @@ enum Operation {
 }
 
 impl Operation {
-    fn apply(&self, other: u32) -> u32 {
+    fn apply(&self, other: u64) -> u64 {
         let get_value = |operand: &Operand| match operand {
             Operand::Value(val) => *val,
             Operand::UseSelf => other,
@@ -52,11 +52,11 @@ struct Monkey {
     items: VecDeque<Item>,
     operation: Operation,
     test: Test,
-    inspections_made: u32,
+    inspections_made: u64,
 }
 
 impl Monkey {
-    fn take_turn(&mut self, divisor: u32, mod_val: u32) -> Vec<(Item, usize)> {
+    fn take_turn(&mut self, divisor: u64, mod_val: u64) -> Vec<(Item, usize)> {
         let mut result = vec![];
 
         while let Some(Item(worry_score)) = self.items.pop_front() {
@@ -78,7 +78,7 @@ fn parse_input(input: &[String]) -> Vec<Monkey> {
     while let Some(_) = iter.next() {
         let items = iter.next().unwrap().split(": ").nth(1).unwrap().split(", ");
         let items: VecDeque<Item> = items
-            .map(|item| Item(item.parse::<u32>().unwrap()))
+            .map(|item| Item(item.parse::<u64>().unwrap()))
             .collect();
         let operation = iter.next().unwrap().split("= old ").nth(1).unwrap();
         let operation = match operation.chars().next() {
@@ -99,7 +99,7 @@ fn parse_input(input: &[String]) -> Vec<Monkey> {
             .split("divisible by ")
             .nth(1)
             .unwrap()
-            .parse::<u32>()
+            .parse::<u64>()
             .unwrap();
         let true_monkey = iter
             .next()
@@ -107,7 +107,7 @@ fn parse_input(input: &[String]) -> Vec<Monkey> {
             .split("to monkey ")
             .nth(1)
             .unwrap()
-            .parse::<u32>()
+            .parse::<u64>()
             .unwrap();
         let false_monkey = iter
             .next()
@@ -115,7 +115,7 @@ fn parse_input(input: &[String]) -> Vec<Monkey> {
             .split("to monkey ")
             .nth(1)
             .unwrap()
-            .parse::<u32>()
+            .parse::<u64>()
             .unwrap();
 
         monkeys.push(Monkey {
@@ -136,13 +136,13 @@ fn parse_input(input: &[String]) -> Vec<Monkey> {
     monkeys
 }
 
-fn part1(input: &[String]) -> u32 {
+fn part1(input: &[String]) -> u64 {
     let mut monkeys = parse_input(input);
 
     // 20 rounds
     for _ in 1..=20 {
         for i in 0..monkeys.len() {
-            let result = monkeys[i].take_turn(3, u32::MAX);
+            let result = monkeys[i].take_turn(3, u64::MAX);
 
             for (item, next_monkey) in result.iter() {
                 monkeys[*next_monkey].items.push_back(*item);
@@ -158,7 +158,7 @@ fn part1(input: &[String]) -> u32 {
         .fold(1, |acc, monkey| acc * monkey.inspections_made)
 }
 
-fn part2(input: &[String]) -> u32 {
+fn part2(input: &[String]) -> u64 {
     let mut monkeys = parse_input(input);
     let mod_val = monkeys
         .iter()
@@ -180,5 +180,5 @@ fn part2(input: &[String]) -> u32 {
     monkeys
         .iter()
         .take(2)
-        .fold(1, |acc, monkey| (acc * monkey.inspections_made) % mod_val)
+        .fold(1, |acc, monkey| (acc * monkey.inspections_made))
 }
