@@ -56,11 +56,11 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn take_turn(&mut self) -> Vec<(Item, usize)> {
+    fn take_turn(&mut self, divisor: u32, mod_val: u32) -> Vec<(Item, usize)> {
         let mut result = vec![];
 
         while let Some(Item(worry_score)) = self.items.pop_front() {
-            let new_worry_score = self.operation.apply(worry_score) / 3;
+            let new_worry_score = (self.operation.apply(worry_score) % mod_val) / divisor;
             let next_monkey = self.test.execute(new_worry_score);
 
             result.push((Item(new_worry_score), next_monkey as usize));
@@ -142,7 +142,7 @@ fn part1(input: &[String]) -> u32 {
     // 20 rounds
     for _ in 1..=20 {
         for i in 0..monkeys.len() {
-            let result = monkeys[i].take_turn();
+            let result = monkeys[i].take_turn(3, u32::MAX);
 
             for (item, next_monkey) in result.iter() {
                 monkeys[*next_monkey].items.push_back(*item);
@@ -159,5 +159,26 @@ fn part1(input: &[String]) -> u32 {
 }
 
 fn part2(input: &[String]) -> u32 {
-    todo!();
+    let mut monkeys = parse_input(input);
+    let mod_val = monkeys
+        .iter()
+        .fold(1, |acc, monkey| acc * monkey.test.divisor);
+
+    // 10,000 rounds
+    for _ in 1..=10_000 {
+        for i in 0..monkeys.len() {
+            let result = monkeys[i].take_turn(1, mod_val);
+
+            for (item, next_monkey) in result.iter() {
+                monkeys[*next_monkey].items.push_back(*item);
+            }
+        }
+    }
+
+    monkeys.sort_by(|a, b| b.inspections_made.cmp(&a.inspections_made));
+
+    monkeys
+        .iter()
+        .take(2)
+        .fold(1, |acc, monkey| (acc * monkey.inspections_made) % mod_val)
 }
