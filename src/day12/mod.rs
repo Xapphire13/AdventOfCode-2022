@@ -13,8 +13,6 @@ struct Position(u32, u32);
 
 struct Map {
     data: Vec<Vec<char>>,
-    start: Position,
-    target: Position,
     width: u32,
     height: u32,
 }
@@ -54,15 +52,15 @@ impl Map {
     }
 
     /** Find the shortest path from start->target */
-    fn find_path(&self) -> u32 {
+    fn find_path(&self, start: Position, target: Position) -> u32 {
         let mut paths = BinaryHeap::new();
-        paths.push(Path::new(self.start));
+        paths.push(Path::new(start));
         // Records the current known min path to position
         let mut min_paths = HashMap::<Position, u32>::new();
-        min_paths.insert(self.start, 0);
+        min_paths.insert(start, 0);
 
         while let Some(path) = paths.pop() {
-            if path.current_position == self.target {
+            if path.current_position == target {
                 return path.length;
             }
 
@@ -108,13 +106,65 @@ impl Map {
 
         panic!("No path found!");
     }
+
+    /** Return the shortest distance from start point to everywhere else on the map */
+    fn explore(&self, start: Position) -> HashMap<Position, u32> {
+        let mut paths = BinaryHeap::new();
+        paths.push(Path::new(start));
+        // Records the current known min path to position
+        let mut min_paths = HashMap::<Position, u32>::new();
+        min_paths.insert(start, 0);
+
+        while let Some(path) = paths.pop() {
+            let Position(x, y) = path.current_position;
+            let next_positions = vec![
+                Position(x, y.saturating_sub(1)),           // Up
+                Position(x, y.add(1).min(self.height - 1)), // Down
+                Position(x.saturating_sub(1), y),           // Left
+                Position(x.add(1).min(self.width - 1), y),  // Right
+            ];
+
+            for position in next_positions {
+                let can_be_reached_from = match self
+                    .get_height(path.current_position)
+                    .cmp(&self.get_height(position))
+                {
+                    // Can only go up height of 1 or less
+                    std::cmp::Ordering::Greater => {
+                        height_difference(
+                            self.get_height(path.current_position),
+                            self.get_height(position),
+                        ) <= 1
+                    }
+                    // Can go down any number
+                    _ => true,
+                };
+                let found_shortest_path = match min_paths.get(&position) {
+                    // If this is shorter than any route found before
+                    Some(distance) => *distance > path.length + 1,
+                    // We haven't found a route yet
+                    None => true,
+                };
+
+                if can_be_reached_from && found_shortest_path {
+                    min_paths.insert(position, path.length + 1);
+                    paths.push(Path {
+                        current_position: position,
+                        length: path.length + 1,
+                    })
+                }
+            }
+        }
+
+        min_paths
+    }
 }
 
 fn height_difference(first: char, second: char) -> u32 {
     (first as u32).abs_diff(second as u32)
 }
 
-fn parse_input(input: &[String]) -> Map {
+fn parse_input(input: &[String]) -> (Map, Position, Position) {
     let mut data: Vec<Vec<char>> = vec![];
     let mut start = None;
     let mut target = None;
@@ -139,21 +189,33 @@ fn parse_input(input: &[String]) -> Map {
         data.push(row);
     }
 
-    Map {
-        start: start.unwrap(),
-        target: target.unwrap(),
-        width: data[0].len() as u32,
-        height: data.len() as u32,
-        data,
-    }
+    (
+        Map {
+            width: data[0].len() as u32,
+            height: data.len() as u32,
+            data,
+        },
+        start.unwrap(),
+        target.unwrap(),
+    )
 }
 
 fn part1(input: &[String]) -> u32 {
-    let map = parse_input(input);
+    let (map, start, target) = parse_input(input);
 
-    map.find_path()
+    map.find_path(start, target)
 }
 
 fn part2(input: &[String]) -> u32 {
-    todo!();
+    let (map, _, target) = parse_input(input);
+    let mut min_distance = None;
+
+    for (position, distance) in map.explore(target).iter() {
+        if map.get_height(*position) == 'a' {
+            min_distance =
+                min_distance.map_or(Some(*distance), |prev: u32| Some(prev.min(*distance)));
+        }
+    }
+
+    min_distance.unwrap()
 }
