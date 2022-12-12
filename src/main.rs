@@ -15,6 +15,7 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
+mod day12;
 
 fn main() -> Result<()> {
     let stdin = stdin();
@@ -54,6 +55,7 @@ fn main() -> Result<()> {
         9 => day09::run(lines),
         10 => day10::run(lines),
         11 => day11::run(lines),
+        12 => day12::run(lines),
         _ => {}
     }
 
