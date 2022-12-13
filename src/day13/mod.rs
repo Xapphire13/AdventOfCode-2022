@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Debug, ops::Index, str::Chars, vec};
+use std::{cmp::Ordering, fmt::Debug, str::Chars, vec};
 
 pub fn run(input: Vec<String>) {
     println!("Part 1: {}", part1(&input));
