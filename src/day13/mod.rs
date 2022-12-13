@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Debug, str::Chars, vec};
+use std::{cmp::Ordering, fmt::Debug, ops::Index, str::Chars, vec};
 
 pub fn run(input: Vec<String>) {
     println!("Part 1: {}", part1(&input));
@@ -123,5 +123,19 @@ fn part1(input: &[String]) -> u32 {
 }
 
 fn part2(input: &[String]) -> u32 {
-    todo!();
+    let pairs = parse_input(input);
+    let divider_1 = ListItem::List(vec![ListItem::List(vec![ListItem::Integer(2)])]);
+    let divider_2 = ListItem::List(vec![ListItem::List(vec![ListItem::Integer(6)])]);
+    let mut packets = pairs
+        .into_iter()
+        .flat_map(|(left, right)| vec![left, right])
+        .collect::<Vec<ListItem>>();
+    packets.push(divider_1.clone());
+    packets.push(divider_2.clone());
+    packets.sort();
+
+    let divider_1_index = packets.iter().position(|it| *it == divider_1).unwrap() + 1;
+    let divider_2_index = packets.iter().position(|it| *it == divider_2).unwrap() + 1;
+
+    (divider_1_index * divider_2_index) as u32
 }
