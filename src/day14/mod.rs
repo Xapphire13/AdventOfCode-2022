@@ -1,7 +1,4 @@
-use std::{
-    borrow::BorrowMut,
-    collections::{HashMap, HashSet},
-};
+use std::collections::HashMap;
 
 pub fn run(input: Vec<String>) {
     println!("Part 1: {}", part1(&input));
@@ -21,31 +18,37 @@ struct Position(u32, u32);
 struct Slice {
     data: HashMap<Position, Material>,
     height: u32,
-    x_min: u32,
-    x_max: u32,
     sand_count: u32,
+    include_floor: bool,
 }
 
 impl Slice {
     fn new() -> Slice {
         Slice {
             height: 0,
-            x_min: 0,
-            x_max: 0,
             sand_count: 0,
             data: HashMap::new(),
+            include_floor: false,
         }
     }
 
     fn print(&self) {
+        let mut x_min = u32::MAX;
+        let mut x_max = u32::MIN;
+
+        for (Position(x, _), _) in self.data.iter() {
+            x_min = x_min.min(*x);
+            x_max = x_max.max(*x);
+        }
+
         for y in 0..self.height {
-            for x in self.x_min..=self.x_max {
+            for x in x_min..=x_max {
                 print!(
                     "{} ",
-                    match self.data.get(&Position(x, y)) {
-                        Some(Material::Rock) => "#",
-                        Some(Material::Sand) => "o",
-                        _ => ".",
+                    match self.get(Position(x, y)) {
+                        Material::Rock => "#",
+                        Material::Sand => "o",
+                        Material::Air => ".",
                     }
                 );
             }
@@ -55,10 +58,13 @@ impl Slice {
     }
 
     fn get(&self, Position(x_pos, y_pos): Position) -> Material {
-        *self
-            .data
-            .get(&Position(x_pos, y_pos))
-            .unwrap_or(&Material::Air)
+        *self.data.get(&Position(x_pos, y_pos)).unwrap_or_else(|| {
+            if self.include_floor && y_pos == self.height - 1 {
+                return &Material::Rock;
+            }
+
+            &Material::Air
+        })
     }
 
     fn set(&mut self, position: Position, value: Material) {
@@ -66,19 +72,24 @@ impl Slice {
     }
 
     fn drop_sand(&mut self, Position(x_pos, y_pos): Position) -> bool {
-        for y in y_pos..self.height {
-            if y < (self.height - 1) && self.get(Position(x_pos, y + 1)) != Material::Air {
-                if self.get(Position(x_pos - 1, y + 1)) == Material::Air {
-                    // Go right
-                    return self.drop_sand(Position(x_pos - 1, y));
-                } else if self.get(Position(x_pos + 1, y + 1)) == Material::Air {
-                    // Go left
-                    return self.drop_sand(Position(x_pos + 1, y));
-                } else {
-                    self.set(Position(x_pos, y), Material::Sand);
-                    self.sand_count += 1;
-                    return true;
-                }
+        for y in y_pos..(self.height - 1) {
+            // Find lowest Y where the next space isn't empty
+            if self.get(Position(x_pos, y + 1)) == Material::Air {
+                continue;
+            }
+
+            if self.get(Position(x_pos - 1, y + 1)) == Material::Air {
+                // Left diagonal is empty, place there
+                return self.drop_sand(Position(x_pos - 1, y + 1));
+            } else if self.get(Position(x_pos + 1, y + 1)) == Material::Air {
+                // Right diagonal is empty, place there
+                return self.drop_sand(Position(x_pos + 1, y + 1));
+            } else if self.get(Position(x_pos, y)) == Material::Air {
+                self.set(Position(x_pos, y), Material::Sand);
+                self.sand_count += 1;
+                return true;
+            } else {
+                break;
             }
         }
 
@@ -86,7 +97,7 @@ impl Slice {
     }
 }
 
-fn parse_input(input: &[String]) -> Slice {
+fn parse_input(input: &[String], include_floor: bool) -> Slice {
     let line_segments: Vec<Vec<(u32, u32)>> = input
         .iter()
         .map(|line_segment| {
@@ -105,16 +116,12 @@ fn parse_input(input: &[String]) -> Slice {
         .collect();
     let mut y_max = 0;
     let mut slice = Slice::new();
-    let mut x_min = u32::MAX;
-    let mut x_max = u32::MIN;
 
     for vertices in line_segments {
         for window in vertices.windows(2) {
             let v1 = window[0];
             let v2 = window[1];
             y_max = y_max.max(v1.1).max(v2.1);
-            x_min = x_min.min(v1.0).min(v2.0);
-            x_max = x_max.max(v1.0).max(v2.0);
 
             for x in v1.0.min(v2.0)..=v1.0.max(v2.0) {
                 for y in v1.1.min(v2.1)..=v1.1.max(v2.1) {
@@ -125,22 +132,27 @@ fn parse_input(input: &[String]) -> Slice {
     }
 
     slice.height = y_max + 1;
-    slice.x_min = x_min;
-    slice.x_max = x_max;
+
+    if include_floor {
+        slice.height += 2;
+        slice.include_floor = true;
+    }
 
     slice
 }
 
 fn part1(input: &[String]) -> u32 {
-    let mut slice = parse_input(input);
+    let mut slice = parse_input(input, false);
 
     while slice.drop_sand(Position(500, 0)) {}
-
-    slice.print();
 
     slice.sand_count
 }
 
 fn part2(input: &[String]) -> u32 {
-    todo!()
+    let mut slice = parse_input(input, true);
+
+    while slice.drop_sand(Position(500, 0)) {}
+
+    slice.sand_count
 }
