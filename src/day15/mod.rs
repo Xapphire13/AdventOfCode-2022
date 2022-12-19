@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -25,8 +23,14 @@ impl Position {
     }
 }
 
+struct Sensor {
+    position: Position,
+    radius: u32,
+}
+
 struct Map {
-    data: HashMap<Position, MapCell>,
+    sensors: Vec<Sensor>,
+    beacons: Vec<Position>,
 }
 
 impl Map {
@@ -39,10 +43,11 @@ impl Map {
         }
 
         let mut map = Map {
-            data: HashMap::new(),
+            beacons: vec![],
+            sensors: vec![],
         };
 
-        for line in input {
+        for (i, line) in input.iter().enumerate() {
             let captures = RE.captures(line).unwrap();
 
             let sensor_x = captures.get(1).unwrap().as_str().parse::<i32>().unwrap();
@@ -60,29 +65,33 @@ impl Map {
     }
 
     fn get(&self, position: Position) -> MapCell {
-        *self.data.get(&position).unwrap_or(&MapCell::Unknown)
-    }
+        if self
+            .beacons
+            .iter()
+            .any(|beacon_position| *beacon_position == position)
+        {
+            return MapCell::Beacon;
+        }
 
-    fn set(&mut self, position: Position, value: MapCell) {
-        self.data.insert(position, value);
+        for sensor in self.sensors.iter() {
+            if sensor.position == position {
+                return MapCell::Sensor;
+            }
+
+            if sensor.position.abs_distance(position) <= sensor.radius {
+                return MapCell::NotBeacon;
+            }
+        }
+
+        MapCell::Unknown
     }
 
     fn add_sensor(&mut self, sensor_position: Position, closest_beacon_position: Position) {
-        self.set(sensor_position, MapCell::Sensor);
-        self.set(closest_beacon_position, MapCell::Beacon);
-        let distance = sensor_position.abs_distance(closest_beacon_position) as i32;
-
-        for x in (sensor_position.0 - distance)..=(sensor_position.0 + distance) {
-            for y in (sensor_position.1 - distance)..=(sensor_position.1 + distance) {
-                let position = Position(x, y);
-
-                if self.get(position) == MapCell::Unknown
-                    && position.abs_distance(sensor_position) <= (distance as u32)
-                {
-                    self.set(position, MapCell::NotBeacon);
-                }
-            }
-        }
+        self.sensors.push(Sensor {
+            position: sensor_position,
+            radius: sensor_position.abs_distance(closest_beacon_position),
+        });
+        self.beacons.push(closest_beacon_position);
     }
 
     fn get_row(&self, y: i32) -> Vec<MapCell> {
@@ -125,11 +134,23 @@ impl Map {
         let mut min_y = i32::MAX;
         let mut max_y = i32::MIN;
 
-        for Position(x, y) in self.data.keys() {
+        for Position(x, y) in self.beacons.iter() {
             min_x = min_x.min(*x);
             max_x = max_x.max(*x);
             min_y = min_y.min(*y);
             max_y = max_y.max(*y);
+        }
+
+        for sensor in self.sensors.iter() {
+            let sensor_bound_min_x = sensor.position.0 - sensor.radius as i32;
+            let sensor_bound_max_x = sensor.position.0 + sensor.radius as i32;
+            let sensor_bound_min_y = sensor.position.1 - sensor.radius as i32;
+            let sensor_bound_max_y = sensor.position.1 + sensor.radius as i32;
+
+            min_x = min_x.min(sensor_bound_min_x);
+            max_x = max_x.max(sensor_bound_max_x);
+            min_y = min_y.min(sensor_bound_min_y);
+            max_y = max_y.max(sensor_bound_max_y);
         }
 
         ((min_x, max_x), (min_y, max_y))
