@@ -170,5 +170,15 @@ fn part1(input: &[String]) -> u32 {
 }
 
 fn part2(input: &[String]) -> u32 {
-    todo!();
+    let map = Map::parse(input);
+
+    for x in 0u32..=4_000_000u32 {
+        for y in 0u32..=4_000_000u32 {
+            if map.get(Position(x as i32, y as i32)) == MapCell::Unknown {
+                return (x * 4_000_000) + y;
+            }
+        }
+    }
+
+    panic!("Beacon not found!");
 }
