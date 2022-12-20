@@ -1,3 +1,5 @@
+use std::vec;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -17,15 +19,123 @@ enum MapCell {
 #[derive(Hash, Eq, PartialEq, Clone, Copy)]
 struct Position(i32, i32);
 
+struct Vertices {
+    top: Position,
+    bottom: Position,
+    left: Position,
+    right: Position,
+}
+
+struct Edges {
+    top_left: (Position, Position),
+    top_right: (Position, Position),
+    bottom_left: (Position, Position),
+    bottom_right: (Position, Position),
+}
+
 impl Position {
     fn abs_distance(&self, other: Position) -> u32 {
         self.0.abs_diff(other.0) + self.1.abs_diff(other.1)
+    }
+
+    fn up(&self) -> Position {
+        Position(self.0, self.1 - 1)
+    }
+
+    fn down(&self) -> Position {
+        Position(self.0, self.1 + 1)
+    }
+
+    fn left(&self) -> Position {
+        Position(self.0 - 1, self.1)
+    }
+
+    fn right(&self) -> Position {
+        Position(self.0 + 1, self.1)
     }
 }
 
 struct Sensor {
     position: Position,
     radius: u32,
+}
+
+fn find_intersection(edge1: (Position, Position), edge2: (Position, Position)) -> Option<Position> {
+    let step = if edge1.0 .1 < edge1.1 .1 { 1 } else { -1 };
+    let mut y = edge1.0 .1;
+
+    for x in (edge1.0 .0)..=(edge1.1 .1) {
+        let delta_x = (edge2.0).0.abs_diff(x);
+        let delta_y = (edge2.0).1.abs_diff(y);
+
+        if delta_x == delta_y {
+            return Some(Position(x, y));
+        }
+
+        y += step;
+    }
+
+    None
+}
+
+impl Sensor {
+    fn intersections(&self, other: &Sensor) -> Vec<Position> {
+        let mut result = vec![];
+
+        let self_edges = self.edges();
+        let other_edges = other.edges();
+
+        let to_check = [
+            (self_edges.bottom_left, other_edges.top_left),
+            (self_edges.bottom_left, other_edges.bottom_right),
+            (self_edges.bottom_right, other_edges.top_right),
+            (self_edges.bottom_right, other_edges.bottom_left),
+            (self_edges.top_left, other_edges.bottom_left),
+            (self_edges.top_left, other_edges.top_right),
+            (self_edges.top_right, other_edges.top_left),
+            (self_edges.top_right, other_edges.bottom_right),
+        ];
+
+        for (edge1, edge2) in to_check {
+            if let Some(intersection) = find_intersection(edge1, edge2) {
+                result.push(intersection);
+            }
+        }
+
+        result
+    }
+
+    fn edges(&self) -> Edges {
+        let vertices = self.vertices();
+
+        Edges {
+            top_left: (vertices.left, vertices.top),
+            top_right: (vertices.top, vertices.right),
+            bottom_left: (vertices.left, vertices.bottom),
+            bottom_right: (vertices.bottom, vertices.right),
+        }
+    }
+
+    fn vertices(&self) -> Vertices {
+        Vertices {
+            top: Position {
+                1: self.position.1 - self.radius as i32,
+                ..self.position
+            },
+            bottom: Position {
+                1: self.position.1 + self.radius as i32,
+                ..self.position
+            },
+            left: Position {
+                0: self.position.0 - self.radius as i32,
+                ..self.position
+            },
+            right: Position {
+                0: self.position.0 + self.radius as i32,
+                ..self.position
+            },
+        }
+    }
 }
 
 struct Map {
@@ -47,7 +157,7 @@ impl Map {
             sensors: vec![],
         };
 
-        for (i, line) in input.iter().enumerate() {
+        for line in input.iter() {
             let captures = RE.captures(line).unwrap();
 
             let sensor_x = captures.get(1).unwrap().as_str().parse::<i32>().unwrap();
@@ -169,13 +279,36 @@ fn part1(input: &[String]) -> u32 {
     })
 }
 
-fn part2(input: &[String]) -> u32 {
+fn part2(input: &[String]) -> u64 {
+    const LIMIT: u32 = 4_000_000;
     let map = Map::parse(input);
+    let mut areas_to_check = vec![];
 
-    for x in 0u32..=4_000_000u32 {
-        for y in 0u32..=4_000_000u32 {
-            if map.get(Position(x as i32, y as i32)) == MapCell::Unknown {
-                return (x * 4_000_000) + y;
+    for i in 0..map.sensors.len() {
+        for j in (i + 1)..map.sensors.len() {
+            let sensor1 = &map.sensors[i];
+            let sensor2 = &map.sensors[j];
+
+            let vertices = sensor1.vertices();
+
+            areas_to_check.push(vertices.top);
+            areas_to_check.push(vertices.bottom);
+            areas_to_check.push(vertices.left);
+            areas_to_check.push(vertices.right);
+
+            areas_to_check.append(&mut sensor1.intersections(sensor2));
+        }
+    }
+
+    for area in areas_to_check {
+        let positions = [area.up(), area.down(), area.left(), area.right()];
+
+        for position in positions
+            .iter()
+            .filter(|it| it.0 >= 0 && it.0 <= LIMIT as i32 && it.1 >= 0 && it.1 <= LIMIT as i32)
+        {
+            if map.get(*position) == MapCell::Unknown {
+                return (position.0 as u64 * LIMIT as u64) + position.1 as u64;
             }
         }
     }
